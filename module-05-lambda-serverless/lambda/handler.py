@@ -13,7 +13,7 @@ import re
 import time
 from collections import Counter
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 SKILLS = {
     # cloud & devops
@@ -109,6 +109,9 @@ def lambda_handler(event, context):
     started = time.time()
     method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
     path = event.get("rawPath", "/")
+
+    if method == "OPTIONS":  # CORS preflight: the $default route forwards it here
+        return {"statusCode": 204, "headers": {}, "body": ""}
 
     if method == "GET" and path.endswith("/health"):
         return _resp(200, {

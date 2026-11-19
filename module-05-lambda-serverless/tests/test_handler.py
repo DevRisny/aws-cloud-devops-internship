@@ -34,3 +34,8 @@ def test_match_finds_skills_and_gaps():
 def test_validation_errors():
     assert call("POST", "/match", {"resume": "short", "job": "short"})[0] == 400
     assert call("DELETE", "/match")[0] == 404
+
+
+def test_preflight():
+    ev = {"requestContext": {"http": {"method": "OPTIONS"}}, "rawPath": "/match"}
+    assert handler.lambda_handler(ev, Ctx())["statusCode"] == 204
