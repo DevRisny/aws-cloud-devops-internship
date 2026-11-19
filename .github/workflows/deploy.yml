@@ -18,6 +18,10 @@ permissions:
 
 env:
   AWS_REGION: ap-southeast-2
+  # Public endpoints (not secrets). The deploy hook only ever deploys the current head of main.
+  DEPLOY_HOOK_URL: https://reosh3sjgyprvxeqka7khd7wfq0waivn.lambda-url.ap-southeast-2.on.aws/
+  SKILLMATCH_API: https://b03b4vxstj.execute-api.ap-southeast-2.amazonaws.com
+  PORTFOLIO_URL: https://d7x1ojq6uq6wa.cloudfront.net
 
 jobs:
   test:
@@ -49,25 +53,25 @@ jobs:
   deploy:
     name: Deploy to AWS (keyless deploy hook)
     needs: test
-    if: github.event_name != 'pull_request' && vars.DEPLOY_HOOK_URL != ''
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment: production
     steps:
       - name: Trigger deploy hook (Lambda verifies this is the head of main)
         run: |
-          code=$(curl -sS -o report.json -w '%{http_code}' -X POST "${{ vars.DEPLOY_HOOK_URL }}" \
+          code=$(curl -sS -o report.json -w '%{http_code}' -X POST "$DEPLOY_HOOK_URL" \
                  -H 'content-type: application/json' -d '{"sha":"${{ github.sha }}"}')
           cat report.json; echo
           test "$code" = "200"
       - name: Smoke test live endpoints
         run: |
-          curl -fsS "${{ vars.SKILLMATCH_API }}/health"; echo
-          curl -fsS -o /dev/null -w "portfolio HTTP %{http_code}\n" "${{ vars.PORTFOLIO_URL }}"
+          curl -fsS "$SKILLMATCH_API/health"; echo
+          curl -fsS -o /dev/null -w "portfolio HTTP %{http_code}\n" "$PORTFOLIO_URL"
       - name: Summary
         run: |
           {
             echo "## ✅ Deployed commit \`${GITHUB_SHA::7}\` to AWS ($AWS_REGION)"
-            echo "- Portfolio (S3 + CloudFront): ${{ vars.PORTFOLIO_URL }}"
+            echo "- Portfolio (S3 + CloudFront): $PORTFOLIO_URL"
             echo "- SkillMatch Lambda: new version published"
             echo '```json'; cat report.json; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

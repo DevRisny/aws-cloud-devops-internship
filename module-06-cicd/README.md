@@ -23,7 +23,7 @@ git push (main)
 The usual secure option is **GitHub OIDC → IAM role** ([`setup-oidc.sh`](setup-oidc.sh) is kept for standard accounts).
 My Free-plan account's **service control policy denies `iam:CreateOpenIDConnectProvider`**, and storing long-lived access keys in GitHub is bad practice. So CD is **pull-based and keyless**:
 
-- GitHub holds **no AWS credentials** — only the hook URL (a repository *variable*, not a secret).
+- GitHub holds **no AWS credentials** — only the public hook URL (in the workflow `env`, not a secret).
 - The hook can deploy **only the current head of `main`** from this public repo, so calling it with anything else does nothing.
 - Its IAM role can do exactly two things: `s3:PutObject` on one bucket and `lambda:UpdateFunctionCode/PublishVersion` on one function.
 - Every run is logged in CloudWatch Logs and reported back into the GitHub Actions summary.
