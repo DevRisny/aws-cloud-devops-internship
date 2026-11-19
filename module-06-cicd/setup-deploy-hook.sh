@@ -25,8 +25,10 @@ echo "▶ 2/3 Deploy-hook function"
 ENV="Variables={REPO=DevRisny/aws-cloud-devops-internship,PORTFOLIO_BUCKET=$BUCKET,APP_FUNCTION=skillmatch-api}"
 if aws lambda get-function --function-name $FN >/dev/null 2>&1; then
   aws lambda update-function-code --function-name $FN --zip-file fileb:///tmp/dh.zip >/dev/null
+  aws lambda wait function-updated-v2 --function-name $FN
+  aws lambda update-function-configuration --function-name $FN --timeout 120 >/dev/null
 else
-  aws lambda create-function --function-name $FN --runtime python3.13 --handler deployer.handler --timeout 60 --memory-size 256 \
+  aws lambda create-function --function-name $FN --runtime python3.13 --handler deployer.handler --timeout 120 --memory-size 256 \
     --role "arn:aws:iam::$ACCOUNT:role/$ROLE" --zip-file fileb:///tmp/dh.zip --environment "$ENV" \
     --description "Keyless CD hook for GitHub Actions" --tags Project=Codomax >/dev/null
   aws lambda wait function-active-v2 --function-name $FN

@@ -46,7 +46,13 @@ def handler(event, context):
     except json.JSONDecodeError:
         return _reply(400, {"error": "body must be JSON {\"sha\": \"...\"}"})
 
-    head = json.loads(_get(f"https://api.github.com/repos/{REPO}/commits/main"))["sha"]
+    # GitHub caches unauthenticated API responses for ~60 s, so re-check a few times right after a push
+    head = ""
+    for attempt in range(8):
+        head = json.loads(_get(f"https://api.github.com/repos/{REPO}/commits/main?nocache={time.time_ns()}"))["sha"]
+        if head == sha:
+            break
+        time.sleep(6)
     if not sha or sha != head:
         return _reply(409, {"error": "only the current head of main can be deployed", "requested": sha, "head": head})
 
