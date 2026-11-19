@@ -55,7 +55,8 @@ def handler(event, context):
 
     # --- Module 03 portfolio -> S3
     stamp = datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC")
-    site = {k.split("site/", 1)[1]: v for k, v in files.items() if k.startswith("module-03-s3-static-website/site/")}
+    prefix = "module-03-s3-static-website/site/"
+    site = {k[len(prefix):]: v for k, v in files.items() if k.startswith(prefix)}
     site["theme.css"] = files["assets/theme.css"]
     site["index.html"] = (site["index.html"].decode()
                           .replace("{{BUCKET}}", BUCKET)
