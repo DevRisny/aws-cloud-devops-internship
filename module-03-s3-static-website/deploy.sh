@@ -1,6 +1,7 @@
 #!/bin/bash
 # Module 03 — Amazon S3 static website hosting (run in AWS CloudShell)
 set -euo pipefail
+s3web() { case "$1" in us-east-1|us-west-1|us-west-2|eu-west-1|ap-southeast-1|ap-southeast-2|ap-northeast-1|sa-east-1|us-gov-west-1) echo "s3-website-$1.amazonaws.com";; *) echo "s3-website.$1.amazonaws.com";; esac; }
 cd "$(dirname "$0")"
 export AWS_DEFAULT_REGION=${AWS_REGION:-ap-southeast-2}
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
@@ -30,4 +31,4 @@ cp site/* ../assets/theme.css "$BUILD"/
 sed -i -e "s|{{BUCKET}}|$BUCKET|g" -e "s|{{REGION}}|$AWS_DEFAULT_REGION (Sydney)|g" -e "s|{{DEPLOYED}}|$(date -u '+%d %b %Y, %H:%M UTC')|g" "$BUILD/index.html"
 aws s3 sync "$BUILD" "s3://$BUCKET/" --delete --cache-control "max-age=300"
 echo
-echo "✅ Live: http://$BUCKET.s3-website.$AWS_DEFAULT_REGION.amazonaws.com"
+echo "✅ Live: http://$BUCKET.$(s3web $AWS_DEFAULT_REGION)"

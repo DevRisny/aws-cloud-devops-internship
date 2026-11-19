@@ -75,6 +75,6 @@ jobs:
         run: |
           {
             echo "## ✅ Deployed commit \`${GITHUB_SHA::7}\`"
-            echo "- Portfolio: http://${{ vars.PORTFOLIO_BUCKET }}.s3-website.${AWS_REGION}.amazonaws.com"
+            echo "- Portfolio: http://${{ vars.PORTFOLIO_BUCKET }}.s3-website-${AWS_REGION}.amazonaws.com"
             echo "- Lambda: skillmatch-api updated and published"
           } >> "$GITHUB_STEP_SUMMARY"

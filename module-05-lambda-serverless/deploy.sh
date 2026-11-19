@@ -1,6 +1,7 @@
 #!/bin/bash
 # Module 05 — AWS Lambda + Amazon API Gateway + S3 frontend (run in AWS CloudShell)
 set -euo pipefail
+s3web() { case "$1" in us-east-1|us-west-1|us-west-2|eu-west-1|ap-southeast-1|ap-southeast-2|ap-northeast-1|sa-east-1|us-gov-west-1) echo "s3-website-$1.amazonaws.com";; *) echo "s3-website.$1.amazonaws.com";; esac; }
 cd "$(dirname "$0")"
 export AWS_DEFAULT_REGION=${AWS_REGION:-ap-southeast-2}
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
@@ -58,4 +59,4 @@ sed -i "s|__API_URL__|$API_URL|g" "$BUILD/index.html"
 aws s3 sync "$BUILD" "s3://$BUCKET/" --delete
 echo
 echo "✅ API : $API_URL  (GET /health, POST /match)"
-echo "✅ Site: http://$BUCKET.s3-website.$AWS_DEFAULT_REGION.amazonaws.com"
+echo "✅ Site: http://$BUCKET.$(s3web $AWS_DEFAULT_REGION)"
