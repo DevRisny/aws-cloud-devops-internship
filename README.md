@@ -25,6 +25,15 @@ Real deployments on AWS (Sydney, `ap-southeast-2` — the Region enabled for my 
 | 06 | AWS DevOps & CI/CD | GitHub Actions pipeline: tests → OIDC (no keys) → deploy to S3 + Lambda | [`module-06-cicd`](module-06-cicd) |
 | 07 | Final Cloud Project | **InternTrack** — serverless tracker: S3 + API Gateway + Lambda + DynamoDB + CloudWatch + IAM, all in CloudFormation | [`module-07-final-project`](module-07-final-project) |
 
+## 🌐 Live on AWS
+
+| Module | Live link (HTTPS via CloudFront) | Direct AWS endpoint |
+|---|---|---|
+| 02 · EC2 web server | https://d361b2wm8slqum.cloudfront.net | http://16.178.55.164 (EC2 public IP) |
+| 03 · S3 portfolio | https://d7x1ojq6uq6wa.cloudfront.net | http://risnysuha-portfolio-133556562490.s3-website-ap-southeast-2.amazonaws.com |
+| 05 · SkillMatch (Lambda) | https://d35w185x7f1hbe.cloudfront.net | API: https://b03b4vxstj.execute-api.ap-southeast-2.amazonaws.com/health |
+| 07 · InternTrack | https://d82fcovh5qor2.cloudfront.net | http://interntrack-app-133556562490.s3-website-ap-southeast-2.amazonaws.com |
+
 ## Run any module
 
 Every module deploys from **AWS CloudShell** with one command and can be removed with `cleanup.sh`:
