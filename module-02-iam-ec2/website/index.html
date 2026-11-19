@@ -82,7 +82,7 @@
   </div>
   <div class="grid g2">
     <div class="card"><h3>Build steps</h3><ol class="steps">
-      <li><b>IAM first:</b> created the operator user, group and custom least-privilege policy.</li>
+      <li><b>IAM first:</b> created the operator user and a custom least-privilege policy (groups are blocked by my account's SCP).</li>
       <li><b>Instance role:</b> <code>EC2-WebServer-Role</code> with <code>AmazonSSMManagedInstanceCore</code>.</li>
       <li><b>Security Group:</b> only HTTP inbound; no SSH from the internet.</li>
       <li><b>Launch:</b> Amazon Linux 2023 on a free-tier eligible instance in <code>{{REGION}}</code>, IMDSv2 required.</li>

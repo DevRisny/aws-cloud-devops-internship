@@ -4,6 +4,8 @@ A serverless internship-application tracker: add applications, move them from *W
 
 ![Architecture](architecture.png)
 
+🎬 **Demo video:** [docs/InternTrack_demo.mp4](docs/InternTrack_demo.mp4) · 🌐 **Live:** https://d82fcovh5qor2.cloudfront.net
+
 ## AWS services (6)
 | Service | Role |
 |---|---|
