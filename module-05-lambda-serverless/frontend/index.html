@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkillMatch · Serverless résumé ↔ job matcher on AWS Lambda</title>
+<meta name="description" content="Paste a résumé and a job post — a Python AWS Lambda function behind Amazon API Gateway scores the match and explains the gaps.">
+<link rel="stylesheet" href="theme.css">
+<style>
+  textarea { width:100%; min-height:210px; resize:vertical; border:1px solid var(--line); border-radius:14px; padding:14px 16px; font:15px/1.55 'Plus Jakarta Sans',sans-serif; color:var(--ink); background:#fff; outline:none; transition:border .15s, box-shadow .15s; }
+  textarea:focus { border-color:#FFB547; box-shadow:0 0 0 4px rgba(255,153,0,.15); }
+  label { font-weight:700; display:block; margin-bottom:8px; }
+  .run { border:0; cursor:pointer; font-family:inherit; }
+  .run:disabled { opacity:.6; cursor:wait; }
+  .gauge { --v:0; width:170px; height:170px; border-radius:50%; display:grid; place-items:center; margin:0 auto;
+    background: conic-gradient(var(--orange) calc(var(--v)*1%), #F1EDE5 0); transition: --v 1s; }
+  .gauge div { width:132px; height:132px; border-radius:50%; background:#fff; display:grid; place-items:center; text-align:center; }
+  .gauge b { font-size:42px; line-height:1; } .gauge span { font-size:12px; color:var(--muted); font-weight:700; }
+  .chips span { display:inline-block; margin:4px 6px 4px 0; padding:6px 12px; border-radius:999px; font-weight:700; font-size:13px; }
+  .ok span { background:var(--green-soft); color:#15803D; } .gap span { background:#FDECEC; color:#B91C1C; }
+  #result { display:none; } .err { color:#B91C1C; font-weight:700; margin-top:12px; }
+  .apibox { font-family:'JetBrains Mono',monospace; font-size:13px; background:#FFFDF8; border:1px dashed #FFD9A3; padding:12px 14px; border-radius:12px; word-break:break-all; }
+  .meta { font-size:13px; color:var(--muted); }
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <div class="brand"><div class="logo">SM</div>SkillMatch</div>
+  <ul><li><a href="#try">Try it</a></li><li><a href="#how">Architecture</a></li><li><a href="https://github.com/DevRisny/aws-cloud-devops-internship/tree/main/module-05-lambda-serverless">Code</a></li></ul>
+</div></nav>
+
+<header class="hero" style="padding-bottom:20px"><div class="wrap">
+  <span class="eyebrow"><span class="dot"></span> Module 05 · AWS Lambda &amp; Serverless</span>
+  <h1>Does your CV fit the job? <span class="grad">Ask a serverless API.</span></h1>
+  <p class="lead">Paste a résumé and a job description. A Python function on <b>AWS Lambda</b>, called through <b>Amazon API Gateway</b>, finds the required skills, scores the match and tells you exactly what is missing — no servers to manage.</p>
+</div></header>
+
+<section id="try" style="padding-top:10px"><div class="wrap">
+  <div class="grid g2">
+    <div class="card"><label for="cv">Résumé text</label><textarea id="cv">Junaideen Risny Suha — HDIT student at ICST. Skilled in Python, machine learning, deep learning and NLP research. Built apps with React, PHP/Laravel, MySQL and Flutter with Firebase. Hands-on with AWS EC2, S3 and IAM, Docker, GitHub Actions CI/CD and Linux. Strong communication, teamwork and leadership.</textarea></div>
+    <div class="card"><label for="job">Job description</label><textarea id="job">Cloud &amp; DevOps Intern. Requirements: AWS (EC2, S3, Lambda, IAM, CloudWatch), Linux and Bash scripting, Docker and Kubernetes, CI/CD with GitHub Actions or Jenkins, Python, Git. Good communication and problem solving skills.</textarea></div>
+  </div>
+  <div class="btns"><button class="btn primary run" id="go">Analyse match →</button><span class="meta" style="align-self:center">Calls <code>POST /match</code> on the live API</span></div>
+  <div class="err" id="err"></div>
+
+  <div id="result" style="margin-top:26px">
+    <div class="grid g3">
+      <div class="card" style="text-align:center"><div class="gauge" id="gauge"><div><span>MATCH</span><b id="score">0</b><span id="verdict"></span></div></div></div>
+      <div class="card"><h3>✅ Skills you already show</h3><div class="chips ok" id="matched"></div><h3 style="margin-top:14px">⚠️ Missing for this job</h3><div class="chips gap" id="missing"></div></div>
+      <div class="card"><h3>How to improve</h3><ul id="tips" style="margin-left:18px;color:var(--muted);font-size:15px"></ul><p class="meta" id="meta" style="margin-top:12px"></p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>Serverless architecture</h2>
+  <p class="sub">Static page on Amazon S3 → HTTPS call to API Gateway (HTTP API, CORS enabled) → Lambda function (Python, 128 MB) → logs and metrics in CloudWatch. You pay only per request.</p>
+  <div class="grid g4">
+    <div class="card"><div class="icon i-green">S3</div><h3>Amazon S3</h3><p>Hosts this page as a static website.</p></div>
+    <div class="card"><div class="icon i-violet">API</div><h3>API Gateway</h3><p>HTTP API with routes <code>GET /health</code> and <code>POST /match</code>.</p></div>
+    <div class="card"><div class="icon i-orange">λ</div><h3>AWS Lambda</h3><p>Python handler — tokenises text, detects 100+ tech skills, weights the score.</p></div>
+    <div class="card"><div class="icon i-pink">CW</div><h3>CloudWatch</h3><p>Each request is logged as structured JSON for monitoring.</p></div>
+  </div>
+  <div class="card" style="margin-top:18px"><h3>Live endpoint</h3><div class="apibox" id="api">__API_URL__</div><p class="meta" style="margin-top:8px">Try it: <code>curl __API_URL__/health</code></p></div>
+</div></section>
+
+<footer><div class="wrap"><span>© 2026 Junaideen Risny Suha · Codomax AWS Cloud &amp; DevOps Internship</span><span><a href="https://github.com/DevRisny">GitHub</a></span></div></footer>
+
+<script>
+const API = "__API_URL__";
+const $ = id => document.getElementById(id);
+$('go').onclick = async () => {
+  $('err').textContent = ''; $('go').disabled = true; $('go').textContent = 'Analysing…';
+  try {
+    const r = await fetch(API + '/match', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resume: $('cv').value, job: $('job').value }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    $('result').style.display = 'block';
+    let n = 0; const tick = setInterval(() => { n = Math.min(n + 2, d.score); $('score').textContent = n;
+      $('gauge').style.background = `conic-gradient(var(--orange) ${n}%, #F1EDE5 0)`; if (n >= d.score) clearInterval(tick); }, 16);
+    $('verdict').textContent = d.verdict;
+    $('matched').innerHTML = d.matchedSkills.map(s => `<span>${s}</span>`).join('') || '<span>none yet</span>';
+    $('missing').innerHTML = d.missingSkills.map(s => `<span>${s}</span>`).join('') || '<span>nothing missing 🎉</span>';
+    $('tips').innerHTML = d.tips.map(t => `<li>${t}</li>`).join('');
+    $('meta').textContent = `Lambda time ${d.meta.latencyMs} ms · request ${d.meta.requestId}`;
+  } catch (e) { $('err').textContent = 'Error: ' + e.message; }
+  $('go').disabled = false; $('go').textContent = 'Analyse match →';
+};
+</script>
+</body>
+</html>

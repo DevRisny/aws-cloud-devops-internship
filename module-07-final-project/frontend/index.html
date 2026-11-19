@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InternTrack · Serverless internship tracker on AWS</title>
+<meta name="description" content="Track internship applications from wishlist to offer. Built on Amazon S3, API Gateway, AWS Lambda, DynamoDB and CloudWatch.">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .stats { display:grid; grid-template-columns:repeat(6,1fr); gap:14px; }
+  @media (max-width:900px){ .stats{ grid-template-columns:repeat(3,1fr);} }
+  .st { background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px; box-shadow:var(--shadow); }
+  .st b { font-size:30px; display:block; line-height:1.1; } .st span { font-size:13px; color:var(--muted); font-weight:700; }
+  form.add { display:grid; grid-template-columns: 1.2fr 1.4fr 1fr 1fr 1fr auto; gap:10px; align-items:end; }
+  @media (max-width:900px){ form.add{ grid-template-columns:1fr 1fr; } }
+  .f label { font-size:12.5px; font-weight:700; color:var(--muted); display:block; margin-bottom:5px; }
+  .f input, .f select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:11px; font:inherit; font-size:14.5px; background:#fff; }
+  .f input:focus, .f select:focus { outline:none; border-color:#FFB547; box-shadow:0 0 0 4px rgba(255,153,0,.14); }
+  button { font-family:inherit; cursor:pointer; }
+  .board { display:grid; grid-template-columns:repeat(6, minmax(190px,1fr)); gap:14px; overflow-x:auto; padding-bottom:8px; }
+  .col { background:rgba(255,255,255,.65); border:1px solid var(--line); border-radius:16px; padding:12px; min-height:180px; }
+  .col h4 { display:flex; justify-content:space-between; font-size:14px; margin:2px 4px 10px; }
+  .col h4 em { font-style:normal; color:var(--muted); }
+  .app { background:#fff; border:1px solid var(--line); border-left:4px solid var(--c); border-radius:12px; padding:11px 12px; margin-bottom:10px; box-shadow:0 1px 2px rgba(0,0,0,.03); }
+  .app b { display:block; font-size:14.5px; } .app small { color:var(--muted); display:block; font-size:12.5px; }
+  .app .row { display:flex; gap:6px; margin-top:8px; }
+  .app select { flex:1; font-size:12.5px; padding:5px 6px; border-radius:8px; border:1px solid var(--line); background:#FFFDF9; }
+  .del { border:1px solid #F8D4D4; background:#FFF5F5; color:#B91C1C; border-radius:8px; font-size:12px; font-weight:700; padding:4px 8px; }
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--ink); color:#fff; padding:12px 18px; border-radius:12px; font-weight:600; opacity:0; transform:translateY(10px); transition:.25s; }
+  .toast.show { opacity:1; transform:none; }
+  .empty { color:var(--muted); font-size:13px; text-align:center; padding:18px 6px; border:1px dashed var(--line); border-radius:12px; }
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <div class="brand"><div class="logo">IT</div>InternTrack</div>
+  <ul><li><a href="#board">Board</a></li><li><a href="#arch">Architecture</a></li><li><a href="https://github.com/DevRisny/aws-cloud-devops-internship/tree/main/module-07-final-project">Code</a></li></ul>
+</div></nav>
+
+<header class="hero" style="padding:56px 0 18px"><div class="wrap">
+  <span class="eyebrow"><span class="dot"></span> Module 07 · Final AWS Cloud Deployment Project</span>
+  <h1>Every internship application, <span class="grad">one serverless board.</span></h1>
+  <p class="lead">InternTrack keeps applications moving from wishlist to offer. The page is served from Amazon S3 and every change goes through API Gateway → AWS Lambda → Amazon DynamoDB, monitored by CloudWatch.</p>
+</div></header>
+
+<section style="padding-top:16px"><div class="wrap">
+  <div class="stats" id="stats"></div>
+</div></section>
+
+<section style="padding-top:6px"><div class="wrap">
+  <div class="card">
+    <h3 style="margin-bottom:12px">Add an application</h3>
+    <form class="add" id="add">
+      <div class="f"><label>Company *</label><input name="company" required maxlength="80" placeholder="e.g. Codomax Digital Solutions"></div>
+      <div class="f"><label>Role *</label><input name="role" required maxlength="100" placeholder="e.g. AWS Cloud & DevOps Intern"></div>
+      <div class="f"><label>Status</label><select name="status"></select></div>
+      <div class="f"><label>Location</label><input name="location" maxlength="60" placeholder="Remote / Colombo"></div>
+      <div class="f"><label>Applied on</label><input name="appliedOn" type="date"></div>
+      <button class="btn primary" style="border:0;height:44px">Add</button>
+    </form>
+  </div>
+</div></section>
+
+<section id="board" style="padding-top:10px"><div class="wrap">
+  <h2>Pipeline</h2>
+  <p class="sub">Change a status to move a card — the update is saved in DynamoDB instantly.</p>
+  <div class="board" id="cols"></div>
+</div></section>
+
+<section id="arch"><div class="wrap">
+  <h2>How it runs on AWS</h2>
+  <p class="sub">Everything is defined as code in one AWS CloudFormation template and deployed with a single script.</p>
+  <div class="grid g3">
+    <div class="card"><div class="icon i-green">S3</div><h3>Amazon S3</h3><p>Static website hosting for this single-page app.</p></div>
+    <div class="card"><div class="icon i-violet">API</div><h3>API Gateway (HTTP API)</h3><p>6 routes, CORS, throttling (10 req/s, burst 20).</p></div>
+    <div class="card"><div class="icon i-orange">λ</div><h3>AWS Lambda</h3><p>Python 3.13 CRUD + stats logic with input validation.</p></div>
+    <div class="card"><div class="icon i-blue">DDB</div><h3>Amazon DynamoDB</h3><p>Table <code>InternTrack-Applications</code>, key <code>id</code>, 5 RCU / 5 WCU.</p></div>
+    <div class="card"><div class="icon i-pink">CW</div><h3>Amazon CloudWatch</h3><p>Dashboard, structured logs and an error alarm.</p></div>
+    <div class="card"><div class="icon i-teal">IAM</div><h3>AWS IAM</h3><p>Lambda role limited to 5 DynamoDB actions on one table.</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap"><span>© 2026 Junaideen Risny Suha · Codomax AWS Cloud &amp; DevOps Internship</span><span>API: <code id="apiurl"></code></span></div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "__API_URL__";
+const STATUSES = ["Wishlist","Applied","Assessment","Interview","Offer","Rejected"];
+const COLORS = {Wishlist:"#94A3B8",Applied:"#2563EB",Assessment:"#7C3AED",Interview:"#FF9900",Offer:"#16A34A",Rejected:"#DC2626"};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const toast = m => { $('toast').textContent = m; $('toast').classList.add('show'); setTimeout(() => $('toast').classList.remove('show'), 1800); };
+$('apiurl').textContent = API;
+document.querySelector('[name=status]').innerHTML = STATUSES.map(s => `<option ${s==='Applied'?'selected':''}>${s}</option>`).join('');
+document.querySelector('[name=appliedOn]').valueAsDate = new Date();
+
+async function call(path, opts = {}) {
+  const r = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  if (r.status === 204) return {};
+  const d = await r.json(); if (!r.ok) throw new Error(d.error || r.status); return d;
+}
+
+async function load() {
+  const [{ items }, st] = await Promise.all([call('/applications'), call('/stats')]);
+  $('stats').innerHTML = [
+    ['Total', st.total], ['Applied', st.byStatus.Applied], ['Interviews', st.byStatus.Interview],
+    ['Offers', st.byStatus.Offer], ['Interview rate', st.interviewRate + '%'], ['Offer rate', st.offerRate + '%']
+  ].map(([k, v]) => `<div class="st"><span>${k}</span><b>${v}</b></div>`).join('');
+  $('cols').innerHTML = STATUSES.map(s => {
+    const list = items.filter(i => i.status === s);
+    return `<div class="col"><h4>${s} <em>${list.length}</em></h4>${list.map(i => `
+      <div class="app" style="--c:${COLORS[s]}"><b>${esc(i.company)}</b><small>${esc(i.role)}</small>
+        <small>${esc(i.location || '')}${i.location ? ' · ' : ''}${esc(i.appliedOn || '')}</small>
+        <div class="row"><select data-id="${i.id}">${STATUSES.map(x => `<option ${x===s?'selected':''}>${x}</option>`).join('')}</select>
+        <button class="del" data-del="${i.id}">Delete</button></div></div>`).join('') || '<div class="empty">No applications</div>'}</div>`;
+  }).join('');
+}
+
+$('add').onsubmit = async e => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  try { await call('/applications', { method: 'POST', body: JSON.stringify(data) }); e.target.reset();
+        document.querySelector('[name=appliedOn]').valueAsDate = new Date(); toast('Saved to DynamoDB ✓'); load(); }
+  catch (err) { toast('Error: ' + err.message); }
+};
+$('cols').addEventListener('change', async e => {
+  if (!e.target.dataset.id) return;
+  try { await call('/applications/' + e.target.dataset.id, { method: 'PATCH', body: JSON.stringify({ status: e.target.value }) }); toast('Status updated ✓'); load(); }
+  catch (err) { toast('Error: ' + err.message); }
+});
+$('cols').addEventListener('click', async e => {
+  if (!e.target.dataset.del || !window.confirm('Delete this application?')) return;
+  try { await call('/applications/' + e.target.dataset.del, { method: 'DELETE' }); toast('Deleted'); load(); }
+  catch (err) { toast('Error: ' + err.message); }
+});
+load().catch(err => toast('Could not reach the API: ' + err.message));
+</script>
+</body>
+</html>

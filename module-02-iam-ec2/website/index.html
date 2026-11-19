@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live on Amazon EC2 · Junaideen Risny Suha</title>
+<meta name="description" content="A web server I launched and secured on Amazon EC2 with IAM least-privilege access — Codomax AWS Cloud & DevOps Internship, Module 02.">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .live { display:flex; gap:10px; align-items:center; font-weight:700; color:#15803D; }
+  .live i { width:10px; height:10px; border-radius:50%; background:#16A34A; box-shadow:0 0 0 0 rgba(22,163,74,.5); animation:pulse 1.8s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(22,163,74,.5)} 70%{box-shadow:0 0 0 12px rgba(22,163,74,0)} 100%{box-shadow:0 0 0 0 rgba(22,163,74,0)} }
+  .flow { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center; padding:10px 0; }
+  .node { padding:14px 18px; border-radius:14px; background:#fff; border:1px solid var(--line); box-shadow:var(--shadow); text-align:center; min-width:150px; }
+  .node b { display:block; font-size:15px; } .node span { font-size:12.5px; color:var(--muted); }
+  .arrow { font-size:22px; color:var(--orange); font-weight:800; }
+  .steps li { margin:0 0 10px 20px; color:var(--muted); } .steps b { color:var(--ink); }
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <div class="brand"><div class="logo">RS</div>Risny Suha · Cloud Lab</div>
+  <ul><li><a href="#server">Server</a></li><li><a href="#iam">IAM</a></li><li><a href="#network">Security Group</a></li><li><a href="#how">How I built it</a></li></ul>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="eyebrow"><span class="dot"></span> Module 02 · AWS IAM &amp; EC2</span>
+  <h1>This page is served live from <span class="grad">Amazon EC2</span></h1>
+  <p class="lead">I launched this Linux web server on AWS, secured it with a Security Group and IAM least-privilege access, and installed NGINX automatically with a boot script. The details below are read from the instance itself when it starts.</p>
+  <div class="btns">
+    <a class="btn primary" href="https://github.com/DevRisny/aws-cloud-devops-internship/tree/main/module-02-iam-ec2">View source on GitHub</a>
+    <a class="btn ghost" href="#how">How I built it</a>
+  </div>
+</div></header>
+
+<section id="server"><div class="wrap">
+  <div class="live"><i></i> Instance is running — facts captured at boot</div>
+  <h2 style="margin-top:10px">Live instance details</h2>
+  <p class="sub">Collected from the EC2 Instance Metadata Service (IMDSv2, token-based) by the user-data script.</p>
+  <div class="grid g4">
+    <div class="card"><div class="stat">Instance ID</div><div class="val">{{INSTANCE_ID}}</div></div>
+    <div class="card"><div class="stat">Instance type</div><div class="val">{{INSTANCE_TYPE}}</div></div>
+    <div class="card"><div class="stat">Availability Zone</div><div class="val">{{AZ}}</div></div>
+    <div class="card"><div class="stat">Region</div><div class="val">{{REGION}}</div></div>
+    <div class="card"><div class="stat">AMI</div><div class="val">{{AMI_ID}}</div></div>
+    <div class="card"><div class="stat">Private IP</div><div class="val">{{PRIVATE_IP}}</div></div>
+    <div class="card"><div class="stat">Web server</div><div class="val">{{NGINX}}</div></div>
+    <div class="card"><div class="stat">Booted (UTC)</div><div class="val">{{BOOT_TIME}}</div></div>
+  </div>
+</div></section>
+
+<section id="iam"><div class="wrap">
+  <h2>IAM — who can do what</h2>
+  <p class="sub">Every identity gets only the permissions it needs (principle of least privilege). No access keys are stored on this server.</p>
+  <div class="grid g4">
+    <div class="card"><div class="icon i-pink">USER</div><h3>IAM user</h3><p><code>risny-ec2-operator</code> — console user for day-to-day work instead of the root user.</p></div>
+    <div class="card"><div class="icon i-violet">GRP</div><h3>IAM group</h3><p><code>EC2-Operators</code> — permissions are attached to the group, users inherit them.</p></div>
+    <div class="card"><div class="icon i-orange">POL</div><h3>Custom policy</h3><p><code>EC2-Operate-Lab-Only</code> — view EC2, and start / stop / reboot only instances tagged <code>Project=Codomax</code>.</p></div>
+    <div class="card"><div class="icon i-teal">ROLE</div><h3>EC2 role</h3><p><code>EC2-WebServer-Role</code> — lets the instance use Systems Manager (Session Manager) with temporary credentials.</p></div>
+  </div>
+</div></section>
+
+<section id="network"><div class="wrap">
+  <h2>Security Group — the instance firewall</h2>
+  <p class="sub">Stateful firewall rules on <code>WebServer-SG</code>. SSH port 22 is <b>not</b> open to the internet — I connect through AWS Systems Manager Session Manager instead.</p>
+  <table class="t">
+    <tr><th>Direction</th><th>Protocol / Port</th><th>Source / Destination</th><th>Why</th></tr>
+    <tr><td>Inbound</td><td>TCP 80 (HTTP)</td><td>0.0.0.0/0</td><td>Visitors can open this website</td></tr>
+    <tr><td>Inbound</td><td>TCP 22 (SSH)</td><td>— closed —</td><td>Admin access goes through Session Manager (no open port, no key pair)</td></tr>
+    <tr><td>Outbound</td><td>All</td><td>0.0.0.0/0</td><td>Install updates and packages</td></tr>
+  </table>
+</div></section>
+
+<section id="how"><div class="wrap">
+  <h2>How a request reaches this page</h2>
+  <div class="flow" style="margin:22px 0 30px">
+    <div class="node"><b>Your browser</b><span>HTTP request</span></div><div class="arrow">→</div>
+    <div class="node"><b>Internet Gateway</b><span>default VPC</span></div><div class="arrow">→</div>
+    <div class="node"><b>Security Group</b><span>allow TCP 80</span></div><div class="arrow">→</div>
+    <div class="node"><b>EC2 · {{INSTANCE_TYPE}}</b><span>Amazon Linux 2023</span></div><div class="arrow">→</div>
+    <div class="node"><b>NGINX</b><span>serves this HTML</span></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>Build steps</h3><ol class="steps">
+      <li><b>IAM first:</b> created the operator user, group and custom least-privilege policy.</li>
+      <li><b>Instance role:</b> <code>EC2-WebServer-Role</code> with <code>AmazonSSMManagedInstanceCore</code>.</li>
+      <li><b>Security Group:</b> only HTTP inbound; no SSH from the internet.</li>
+      <li><b>Launch:</b> Amazon Linux 2023 on a free-tier eligible instance in <code>{{REGION}}</code>, IMDSv2 required.</li>
+      <li><b>User data:</b> installs NGINX, reads instance metadata and publishes this page on first boot.</li>
+    </ol></div>
+    <div class="card"><h3>Skills shown</h3>
+      <span class="pill p-o">Amazon EC2</span><span class="pill p-v">AWS IAM</span><span class="pill p-t">Security Groups</span><span class="pill p-b">IMDSv2</span>
+      <span class="pill p-g">NGINX</span><span class="pill p-o">User data / Bash</span><span class="pill p-v">Session Manager</span><span class="pill p-t">AWS CLI</span><span class="pill p-b">Least privilege</span>
+      <p style="margin-top:14px">Everything is scripted with the AWS CLI in <code>deploy.sh</code>, so the whole setup can be rebuilt in minutes and removed with <code>cleanup.sh</code>.</p>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span>© 2026 Junaideen Risny Suha · AWS Cloud &amp; DevOps Intern, Codomax Digital Solutions</span>
+  <span><a href="https://github.com/DevRisny">GitHub</a> · <a href="https://www.linkedin.com/in/risny-suha-8a6b66423">LinkedIn</a></span>
+</div></footer>
+</body>
+</html>

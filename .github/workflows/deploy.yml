@@ -1,0 +1,80 @@
+name: CI/CD — test & deploy to AWS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "module-03-s3-static-website/**"
+      - "module-05-lambda-serverless/**"
+      - "assets/**"
+      - ".github/workflows/deploy.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # needed to get short-lived AWS credentials through OIDC
+  contents: read
+
+env:
+  AWS_REGION: ap-southeast-2
+
+jobs:
+  test:
+    name: Test & validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Unit tests — SkillMatch Lambda
+        run: |
+          pip install --quiet pytest
+          pytest -q module-05-lambda-serverless/tests
+      - name: Validate HTML files
+        run: |
+          python - <<'PY'
+          import glob, html.parser, sys
+          bad = 0
+          for f in glob.glob("module-0*/**/*.html", recursive=True):
+              p = html.parser.HTMLParser(); p.feed(open(f, encoding="utf-8").read()); p.close()
+              print("ok  ", f)
+          sys.exit(bad)
+          PY
+      - name: Lint shell scripts
+        run: |
+          for s in module-0*/*.sh; do bash -n "$s" && echo "ok   $s"; done
+
+  deploy:
+    name: Deploy to AWS
+    needs: test
+    if: github.event_name != 'pull_request' && vars.AWS_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials (OIDC, no stored keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Deploy portfolio to S3
+        run: |
+          BUILD=$(mktemp -d)
+          cp module-03-s3-static-website/site/* assets/theme.css "$BUILD/"
+          sed -i -e "s|{{BUCKET}}|${{ vars.PORTFOLIO_BUCKET }}|g" -e "s|{{REGION}}|${AWS_REGION} (Sydney)|g" \
+                 -e "s|{{DEPLOYED}}|$(date -u '+%d %b %Y, %H:%M UTC') · GitHub Actions run #${{ github.run_number }}|g" "$BUILD/index.html"
+          aws s3 sync "$BUILD" "s3://${{ vars.PORTFOLIO_BUCKET }}/" --delete --cache-control "max-age=300"
+      - name: Deploy SkillMatch Lambda code
+        run: |
+          cd module-05-lambda-serverless/lambda && zip -q ../fn.zip handler.py && cd ..
+          aws lambda update-function-code --function-name skillmatch-api --zip-file fileb://fn.zip --publish \
+            --query '{Version:Version,LastModified:LastModified}' --output table
+      - name: Summary
+        run: |
+          {
+            echo "## ✅ Deployed commit \`${GITHUB_SHA::7}\`"
+            echo "- Portfolio: http://${{ vars.PORTFOLIO_BUCKET }}.s3-website.${AWS_REGION}.amazonaws.com"
+            echo "- Lambda: skillmatch-api updated and published"
+          } >> "$GITHUB_STEP_SUMMARY"

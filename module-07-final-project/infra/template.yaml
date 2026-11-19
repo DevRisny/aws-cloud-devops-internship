@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: InternTrack — serverless internship tracker (S3 + API Gateway + Lambda + DynamoDB + CloudWatch + IAM). Codomax Module 07.
+
+Parameters:
+  CodeBucket: { Type: String, Description: S3 bucket holding the Lambda zip }
+  CodeKey:    { Type: String, Description: S3 key of the Lambda zip }
+  SiteBucketName: { Type: String, Description: Globally unique name for the website bucket }
+
+Resources:
+  ApplicationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: InternTrack-Applications
+      BillingMode: PROVISIONED
+      ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+      AttributeDefinitions: [{ AttributeName: id, AttributeType: S }]
+      KeySchema: [{ AttributeName: id, KeyType: HASH }]
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: false }
+      Tags: [{ Key: Project, Value: Codomax }]
+
+  ApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: InternTrack-Lambda-Role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: table-crud-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [dynamodb:Scan, dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:DeleteItem, dynamodb:GetItem]
+                Resource: !GetAtt ApplicationsTable.Arn
+      Tags: [{ Key: Project, Value: Codomax }]
+
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: interntrack-api
+      Runtime: python3.13
+      Handler: app.handler
+      MemorySize: 256
+      Timeout: 10
+      Role: !GetAtt ApiRole.Arn
+      Code: { S3Bucket: !Ref CodeBucket, S3Key: !Ref CodeKey }
+      Environment: { Variables: { TABLE_NAME: !Ref ApplicationsTable } }
+      Tags: [{ Key: Project, Value: Codomax }]
+
+  ApiLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: { LogGroupName: /aws/lambda/interntrack-api, RetentionInDays: 14 }
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: interntrack-http-api
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins: ["*"]
+        AllowMethods: [GET, POST, PATCH, DELETE, OPTIONS]
+        AllowHeaders: [content-type]
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ApiFunction.Arn
+      PayloadFormatVersion: "2.0"
+  RouteList:   { Type: AWS::ApiGatewayV2::Route, Properties: { ApiId: !Ref HttpApi, RouteKey: "GET /applications", Target: !Sub "integrations/${Integration}" } }
+  RouteCreate: { Type: AWS::ApiGatewayV2::Route, Properties: { ApiId: !Ref HttpApi, RouteKey: "POST /applications", Target: !Sub "integrations/${Integration}" } }
+  RouteUpdate: { Type: AWS::ApiGatewayV2::Route, Properties: { ApiId: !Ref HttpApi, RouteKey: "PATCH /applications/{id}", Target: !Sub "integrations/${Integration}" } }
+  RouteDelete: { Type: AWS::ApiGatewayV2::Route, Properties: { ApiId: !Ref HttpApi, RouteKey: "DELETE /applications/{id}", Target: !Sub "integrations/${Integration}" } }
+  RouteStats:  { Type: AWS::ApiGatewayV2::Route, Properties: { ApiId: !Ref HttpApi, RouteKey: "GET /stats", Target: !Sub "integrations/${Integration}" } }
+  RouteHealth: { Type: AWS::ApiGatewayV2::Route, Properties: { ApiId: !Ref HttpApi, RouteKey: "GET /health", Target: !Sub "integrations/${Integration}" } }
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings: { ThrottlingBurstLimit: 20, ThrottlingRateLimit: 10 }
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*
+
+  SiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref SiteBucketName
+      WebsiteConfiguration: { IndexDocument: index.html }
+      PublicAccessBlockConfiguration: { BlockPublicAcls: true, IgnorePublicAcls: true, BlockPublicPolicy: false, RestrictPublicBuckets: false }
+      Tags: [{ Key: Project, Value: Codomax }]
+  SitePolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: "*", Action: s3:GetObject, Resource: !Sub "${SiteBucket.Arn}/*" }]
+
+  ErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: InternTrack-Lambda-Errors
+      AlarmDescription: Lambda errors in the last 5 minutes
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions: [{ Name: FunctionName, Value: !Ref ApiFunction }]
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  Dashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: InternTrack
+      DashboardBody: !Sub |
+        {"widgets":[
+          {"type":"metric","x":0,"y":0,"width":12,"height":6,"properties":{"title":"Lambda invocations & errors","region":"${AWS::Region}","stat":"Sum","period":300,
+            "metrics":[["AWS/Lambda","Invocations","FunctionName","${ApiFunction}"],[".","Errors",".","."]]}},
+          {"type":"metric","x":12,"y":0,"width":12,"height":6,"properties":{"title":"Lambda duration (ms)","region":"${AWS::Region}","stat":"Average","period":300,
+            "metrics":[["AWS/Lambda","Duration","FunctionName","${ApiFunction}"]]}},
+          {"type":"metric","x":0,"y":6,"width":12,"height":6,"properties":{"title":"API requests","region":"${AWS::Region}","stat":"Sum","period":300,
+            "metrics":[["AWS/ApiGateway","Count","ApiId","${HttpApi}"]]}},
+          {"type":"metric","x":12,"y":6,"width":12,"height":6,"properties":{"title":"DynamoDB consumed capacity","region":"${AWS::Region}","stat":"Sum","period":300,
+            "metrics":[["AWS/DynamoDB","ConsumedReadCapacityUnits","TableName","${ApplicationsTable}"],[".","ConsumedWriteCapacityUnits",".","."]]}}
+        ]}
+
+Outputs:
+  ApiUrl: { Value: !GetAtt HttpApi.ApiEndpoint }
+  WebsiteUrl: { Value: !GetAtt SiteBucket.WebsiteURL }
+  TableName: { Value: !Ref ApplicationsTable }

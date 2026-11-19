@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Junaideen Risny Suha · IT Student, Cloud &amp; AI Builder</title>
+<meta name="description" content="Portfolio of Junaideen Risny Suha — HDIT student at ICST, building AI/ML projects and cloud solutions on AWS. Hosted on Amazon S3.">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .hero-grid { display:grid; grid-template-columns: 1.35fr .9fr; gap:36px; align-items:center; }
+  @media (max-width:900px){ .hero-grid{ grid-template-columns:1fr; } }
+  .profile { position:relative; background:#fff; border:1px solid var(--line); border-radius:26px; padding:28px; box-shadow:var(--shadow); }
+  .avatar { width:84px; height:84px; border-radius:22px; display:grid; place-items:center; font-size:30px; font-weight:800; color:#fff;
+    background:linear-gradient(135deg,#FF9900,#F97316 50%,#0D9488); box-shadow:0 14px 30px -12px rgba(249,115,22,.7); }
+  .kv { display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px dashed var(--line); font-size:14.5px; }
+  .kv:last-child{ border:0 } .kv span:first-child{ color:var(--muted) } .kv span:last-child{ font-weight:700; text-align:right }
+  .s3badge { position:absolute; top:-14px; right:20px; background:#E7F7EC; color:#15803D; border:1px solid #BBE5C8; font-weight:800; font-size:12px; padding:6px 12px; border-radius:999px; }
+  .proj h3 { display:flex; justify-content:space-between; gap:10px; align-items:start; }
+  .proj .tag { font-size:11.5px; font-weight:800; color:var(--orange-deep); background:var(--orange-soft); padding:4px 9px; border-radius:8px; white-space:nowrap; }
+  .tl { position:relative; padding-left:26px; }
+  .tl:before { content:""; position:absolute; left:8px; top:6px; bottom:6px; width:2px; background:linear-gradient(var(--orange),var(--teal)); border-radius:2px; }
+  .tl .item { position:relative; margin-bottom:22px; }
+  .tl .item:before { content:""; position:absolute; left:-24px; top:6px; width:14px; height:14px; border-radius:50%; background:#fff; border:3px solid var(--orange); }
+  .tl .when { font-size:13px; font-weight:800; color:var(--teal); letter-spacing:.03em; text-transform:uppercase; }
+  .contact { background:linear-gradient(135deg,#FFF1DC,#E6F7F5); border:1px solid var(--line); border-radius:26px; padding:40px; text-align:center; }
+</style>
+</head>
+<body>
+<nav class="nav"><div class="wrap">
+  <div class="brand"><div class="logo">RS</div>Risny Suha</div>
+  <ul><li><a href="#about">About</a></li><li><a href="#skills">Skills</a></li><li><a href="#projects">Projects</a></li><li><a href="#journey">Journey</a></li><li><a href="#contact">Contact</a></li></ul>
+</div></nav>
+
+<header class="hero" id="about"><div class="wrap hero-grid">
+  <div>
+    <span class="eyebrow"><span class="dot"></span> Open to internships &amp; junior roles · Sri Lanka</span>
+    <h1>Hi, I'm Risny — I build <span class="grad">AI-powered apps</span> and run them on the cloud.</h1>
+    <p class="lead">Higher Diploma in IT student at ICST, University Park. I build every project on an AI/ML base, my current research is in deep learning and NLP, and I'm now deploying real workloads on AWS as an AWS Cloud &amp; DevOps intern.</p>
+    <div class="btns">
+      <a class="btn primary" href="#projects">See my projects</a>
+      <a class="btn ghost" href="https://github.com/DevRisny">GitHub</a>
+      <a class="btn ghost" href="https://www.linkedin.com/in/risny-suha-8a6b66423">LinkedIn</a>
+    </div>
+  </div>
+  <div class="profile reveal">
+    <span class="s3badge">● Hosted on Amazon S3</span>
+    <div style="display:flex;gap:16px;align-items:center;margin-bottom:18px">
+      <div class="avatar">RS</div>
+      <div><h3 style="font-size:20px;margin:0">Junaideen Risny Suha</h3><div style="color:var(--muted);font-size:14.5px">HDIT Student · Cloud &amp; AI</div></div>
+    </div>
+    <div class="kv"><span>Campus</span><span>ICST, University Park</span></div>
+    <div class="kv"><span>Programme</span><span>HDIT · graduating 2027</span></div>
+    <div class="kv"><span>Focus</span><span>AI/ML · Cloud · Full stack</span></div>
+    <div class="kv"><span>Based in</span><span>Batticaloa, Sri Lanka</span></div>
+    <div class="kv"><span>Languages</span><span>Tamil · English · Sinhala</span></div>
+  </div>
+</div></header>
+
+<section id="skills"><div class="wrap">
+  <h2>What I work with</h2>
+  <p class="sub">A broad IT foundation from my diploma, with hands-on depth in AI, cloud and full-stack development.</p>
+  <div class="grid g4">
+    <div class="card reveal"><div class="icon i-orange">AI</div><h3>AI &amp; Data</h3><p>Python, deep learning &amp; NLP research, scikit-learn models, Power BI, Tableau, SQL</p></div>
+    <div class="card reveal"><div class="icon i-teal">AWS</div><h3>Cloud &amp; DevOps</h3><p>AWS (EC2, S3, IAM, Lambda), Docker, Kubernetes, GitHub Actions CI/CD, Bash, Linux</p></div>
+    <div class="card reveal"><div class="icon i-violet">WEB</div><h3>Full stack &amp; mobile</h3><p>React.js, PHP/Laravel, MySQL, REST APIs, Flutter &amp; Dart, Firebase, Tailwind</p></div>
+    <div class="card reveal"><div class="icon i-blue">NET</div><h3>Networks &amp; QA</h3><p>Networking &amp; troubleshooting, cybersecurity labs, test cases &amp; bug reports, Agile/Jira</p></div>
+  </div>
+</div></section>
+
+<section id="projects"><div class="wrap">
+  <h2>Selected projects</h2>
+  <p class="sub">Things I've designed and built — most of them with machine learning at the core.</p>
+  <div class="grid g3">
+    <div class="card proj reveal"><h3>Explainable Résumé Screening <span class="tag">Research</span></h3><p>Deep-learning system that matches résumés to jobs and explains <i>why</i> a candidate fits. Group research project (Tech Titans) at ICST.</p><div style="margin-top:12px"><span class="pill p-o">Deep Learning</span><span class="pill p-t">NLP</span><span class="pill p-v">XAI</span></div></div>
+    <div class="card proj reveal"><h3>MinVidu <span class="tag">Research</span></h3><p>One-year solo ML research on EV charging stations in Sri Lanka — helping drivers find and recharge at the right station.</p><div style="margin-top:12px"><span class="pill p-o">Machine Learning</span><span class="pill p-g">EV</span><span class="pill p-b">Geo data</span></div></div>
+    <div class="card proj reveal"><h3>LagoonHop <span class="tag">Full stack</span></h3><p>One-day tourist planner web app for Oddamavadi — plan a full day of places, food and travel. Group project for ITE2953.</p><div style="margin-top:12px"><span class="pill p-v">Full stack</span><span class="pill p-t">Tourism</span></div></div>
+    <div class="card proj reveal"><h3>GradGate <span class="tag">Web app</span></h3><p>Student job portal with student, employer and admin roles and a "ghost score" that rates how reliably employers respond.</p><div style="margin-top:12px"><span class="pill p-v">PHP</span><span class="pill p-b">MySQL</span><span class="pill p-o">Reputation system</span></div></div>
+    <div class="card proj reveal"><h3>Fake News Detection <span class="tag">ML app</span></h3><p>App that classifies news articles as real or fake using a Random Forest model trained on labelled news text.</p><div style="margin-top:12px"><span class="pill p-o">Random Forest</span><span class="pill p-t">Python</span></div></div>
+    <div class="card proj reveal"><h3>Cloud Lab on AWS <span class="tag">Cloud</span></h3><p>Internship lab series: EC2 web server with IAM least privilege, this S3 website, serverless APIs and CI/CD pipelines.</p><div style="margin-top:12px"><span class="pill p-g">EC2</span><span class="pill p-g">S3</span><span class="pill p-g">Lambda</span><span class="pill p-g">CI/CD</span></div></div>
+  </div>
+</div></section>
+
+<section id="journey"><div class="wrap grid g2" style="align-items:start">
+  <div>
+    <h2>Journey</h2>
+    <p class="sub">Learning by building, and building with others.</p>
+    <div class="tl">
+      <div class="item"><div class="when">2026 · Now</div><h3>AWS Cloud &amp; DevOps Intern — Codomax Digital Solutions</h3><p style="color:var(--muted)">Virtual internship: IAM, EC2, S3, VPC, RDS, Lambda, CI/CD and a final cloud project.</p></div>
+      <div class="item"><div class="when">Sep 2026</div><h3>SLIIT CODEFEST 2026 — Merit Award</h3><p style="color:var(--muted)">NetCom, Tertiary category — reached the top 6 with the ICST student team.</p></div>
+      <div class="item"><div class="when">2025</div><h3>Global Entrepreneurship Week — Trainer</h3><p style="color:var(--muted)">Taught sessions in Akkaraipattu and Velikanda.</p></div>
+      <div class="item"><div class="when">10+ years</div><h3>Family's computer shop</h3><p style="color:var(--muted)">Hardware repair and troubleshooting, OS installs, antivirus, and stock records in Excel.</p></div>
+    </div>
+  </div>
+  <div class="card reveal">
+    <h3>How this website is hosted</h3>
+    <p style="margin:8px 0 14px">This portfolio is a static website served straight from an <b>Amazon S3</b> bucket.</p>
+    <table class="t">
+      <tr><th>Setting</th><th>Value</th></tr>
+      <tr><td>Bucket</td><td><code>{{BUCKET}}</code></td></tr>
+      <tr><td>Region</td><td>{{REGION}}</td></tr>
+      <tr><td>Hosting</td><td>S3 static website (index + error page)</td></tr>
+      <tr><td>Access</td><td>Bucket policy: public <code>s3:GetObject</code> only</td></tr>
+      <tr><td>Storage class</td><td>S3 Standard · versioning on</td></tr>
+      <tr><td>Deployed</td><td>{{DEPLOYED}}</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<section id="contact"><div class="wrap">
+  <div class="contact reveal">
+    <h2>Let's build something</h2>
+    <p class="sub" style="margin:8px auto 22px">Open to internships and junior roles in cloud, AI, full stack, networking and cybersecurity — remote or anywhere in Sri Lanka.</p>
+    <div class="btns" style="justify-content:center">
+      <a class="btn primary" href="mailto:risnysuha50@gmail.com">risnysuha50@gmail.com</a>
+      <a class="btn ghost" href="https://www.linkedin.com/in/risny-suha-8a6b66423">LinkedIn</a>
+      <a class="btn ghost" href="https://github.com/DevRisny">GitHub</a>
+      <a class="btn ghost" href="https://www.kaggle.com/risnysuha">Kaggle</a>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span>© 2026 Junaideen Risny Suha</span>
+  <span>Static site on Amazon S3 · <a href="https://github.com/DevRisny/aws-cloud-devops-internship/tree/main/module-03-s3-static-website">Source</a></span>
+</div></footer>
+<script>
+  const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('in')), { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
