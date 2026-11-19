@@ -13,10 +13,18 @@ aws iam get-policy --policy-arn "$POLICY_ARN" >/dev/null 2>&1 || \
   aws iam create-policy --policy-name EC2-Operate-Lab-Only \
     --description "View EC2; start/stop/reboot only instances tagged Project=Codomax" \
     --policy-document file://iam/ec2-operator-policy.json --tags $TAG >/dev/null
-aws iam get-group --group-name EC2-Operators >/dev/null 2>&1 || aws iam create-group --group-name EC2-Operators >/dev/null
-aws iam attach-group-policy --group-name EC2-Operators --policy-arn "$POLICY_ARN"
 aws iam get-user --user-name risny-ec2-operator >/dev/null 2>&1 || aws iam create-user --user-name risny-ec2-operator --tags $TAG >/dev/null
-aws iam add-user-to-group --group-name EC2-Operators --user-name risny-ec2-operator
+# Best practice is to attach policies to a group (EC2-Operators). This Free-plan account's
+# service control policy denies iam:CreateGroup, so the group step is tried first and the
+# policy falls back to the user if groups are blocked.
+if aws iam create-group --group-name EC2-Operators >/dev/null 2>&1 || aws iam get-group --group-name EC2-Operators >/dev/null 2>&1; then
+  aws iam attach-group-policy --group-name EC2-Operators --policy-arn "$POLICY_ARN"
+  aws iam add-user-to-group --group-name EC2-Operators --user-name risny-ec2-operator
+  echo "  policy attached to group EC2-Operators"
+else
+  aws iam attach-user-policy --user-name risny-ec2-operator --policy-arn "$POLICY_ARN"
+  echo "  groups blocked by SCP -> policy attached directly to risny-ec2-operator"
+fi
 
 echo "▶ 2/5 IAM role + instance profile for the web server (Session Manager)"
 aws iam get-role --role-name EC2-WebServer-Role >/dev/null 2>&1 || \

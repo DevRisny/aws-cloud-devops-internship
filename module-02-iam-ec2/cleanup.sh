@@ -11,9 +11,10 @@ aws iam remove-role-from-instance-profile --instance-profile-name EC2-WebServer-
 aws iam delete-instance-profile --instance-profile-name EC2-WebServer-Profile
 aws iam detach-role-policy --role-name EC2-WebServer-Role --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 aws iam delete-role --role-name EC2-WebServer-Role
-aws iam remove-user-from-group --group-name EC2-Operators --user-name risny-ec2-operator
+aws iam remove-user-from-group --group-name EC2-Operators --user-name risny-ec2-operator 2>/dev/null
+aws iam detach-user-policy --user-name risny-ec2-operator --policy-arn "arn:aws:iam::$ACCOUNT:policy/EC2-Operate-Lab-Only" 2>/dev/null
 aws iam delete-user --user-name risny-ec2-operator
-aws iam detach-group-policy --group-name EC2-Operators --policy-arn "arn:aws:iam::$ACCOUNT:policy/EC2-Operate-Lab-Only"
-aws iam delete-group --group-name EC2-Operators
+aws iam detach-group-policy --group-name EC2-Operators --policy-arn "arn:aws:iam::$ACCOUNT:policy/EC2-Operate-Lab-Only" 2>/dev/null
+aws iam delete-group --group-name EC2-Operators 2>/dev/null
 aws iam delete-policy --policy-arn "arn:aws:iam::$ACCOUNT:policy/EC2-Operate-Lab-Only"
 echo "🧹 Module 02 resources removed"

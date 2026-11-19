@@ -54,7 +54,7 @@
   <p class="sub">Every identity gets only the permissions it needs (principle of least privilege). No access keys are stored on this server.</p>
   <div class="grid g4">
     <div class="card"><div class="icon i-pink">USER</div><h3>IAM user</h3><p><code>risny-ec2-operator</code> — console user for day-to-day work instead of the root user.</p></div>
-    <div class="card"><div class="icon i-violet">GRP</div><h3>IAM group</h3><p><code>EC2-Operators</code> — permissions are attached to the group, users inherit them.</p></div>
+    <div class="card"><div class="icon i-violet">SCP</div><h3>Guardrails</h3><p>My Free-plan account runs under an AWS Organizations <b>service control policy</b> that blocks IAM groups, so the policy is attached to the user directly.</p></div>
     <div class="card"><div class="icon i-orange">POL</div><h3>Custom policy</h3><p><code>EC2-Operate-Lab-Only</code> — view EC2, and start / stop / reboot only instances tagged <code>Project=Codomax</code>.</p></div>
     <div class="card"><div class="icon i-teal">ROLE</div><h3>EC2 role</h3><p><code>EC2-WebServer-Role</code> — lets the instance use Systems Manager (Session Manager) with temporary credentials.</p></div>
   </div>
