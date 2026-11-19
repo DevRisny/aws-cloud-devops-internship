@@ -35,11 +35,12 @@ echo "▶ 3/5 API Gateway HTTP API + CORS"
 API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='skillmatch-http-api'].ApiId | [0]" --output text)
 if [ "$API_ID" = "None" ]; then
   API_ID=$(aws apigatewayv2 create-api --name skillmatch-http-api --protocol-type HTTP --target "$FN_ARN" \
-    --cors-configuration AllowOrigins='*',AllowMethods=GET,POST,OPTIONS,AllowHeaders=content-type \
     --tags Project=Codomax --query ApiId --output text)
   aws lambda add-permission --function-name $FN --statement-id apigw-invoke --action lambda:InvokeFunction \
     --principal apigateway.amazonaws.com --source-arn "arn:aws:execute-api:$AWS_DEFAULT_REGION:$ACCOUNT:$API_ID/*" >/dev/null
 fi
+aws apigatewayv2 update-api --api-id "$API_ID" --cors-configuration \
+  '{"AllowOrigins":["*"],"AllowMethods":["GET","POST","OPTIONS"],"AllowHeaders":["content-type"],"MaxAge":3600}' >/dev/null
 API_URL=$(aws apigatewayv2 get-api --api-id "$API_ID" --query ApiEndpoint --output text)
 echo "  $API_URL"
 
