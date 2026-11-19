@@ -7,13 +7,13 @@ on:
       - "module-03-s3-static-website/**"
       - "module-05-lambda-serverless/**"
       - "assets/**"
+      - "module-06-cicd/**"
       - ".github/workflows/deploy.yml"
   pull_request:
     branches: [main]
   workflow_dispatch:
 
 permissions:
-  id-token: write   # needed to get short-lived AWS credentials through OIDC
   contents: read
 
 env:
@@ -47,34 +47,27 @@ jobs:
           for s in module-0*/*.sh; do bash -n "$s" && echo "ok   $s"; done
 
   deploy:
-    name: Deploy to AWS
+    name: Deploy to AWS (keyless deploy hook)
     needs: test
-    if: github.event_name != 'pull_request' && vars.AWS_ROLE_ARN != ''
+    if: github.event_name != 'pull_request' && vars.DEPLOY_HOOK_URL != ''
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-      - name: Configure AWS credentials (OIDC, no stored keys)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Deploy portfolio to S3
+      - name: Trigger deploy hook (Lambda verifies this is the head of main)
         run: |
-          BUILD=$(mktemp -d)
-          cp module-03-s3-static-website/site/* assets/theme.css "$BUILD/"
-          sed -i -e "s|{{BUCKET}}|${{ vars.PORTFOLIO_BUCKET }}|g" -e "s|{{REGION}}|${AWS_REGION} (Sydney)|g" \
-                 -e "s|{{DEPLOYED}}|$(date -u '+%d %b %Y, %H:%M UTC') · GitHub Actions run #${{ github.run_number }}|g" "$BUILD/index.html"
-          aws s3 sync "$BUILD" "s3://${{ vars.PORTFOLIO_BUCKET }}/" --delete --cache-control "max-age=300"
-      - name: Deploy SkillMatch Lambda code
+          code=$(curl -sS -o report.json -w '%{http_code}' -X POST "${{ vars.DEPLOY_HOOK_URL }}" \
+                 -H 'content-type: application/json' -d '{"sha":"${{ github.sha }}"}')
+          cat report.json; echo
+          test "$code" = "200"
+      - name: Smoke test live endpoints
         run: |
-          cd module-05-lambda-serverless/lambda && zip -q ../fn.zip handler.py && cd ..
-          aws lambda update-function-code --function-name skillmatch-api --zip-file fileb://fn.zip --publish \
-            --query '{Version:Version,LastModified:LastModified}' --output table
+          curl -fsS "${{ vars.SKILLMATCH_API }}/health"; echo
+          curl -fsS -o /dev/null -w "portfolio HTTP %{http_code}\n" "${{ vars.PORTFOLIO_URL }}"
       - name: Summary
         run: |
           {
-            echo "## ✅ Deployed commit \`${GITHUB_SHA::7}\`"
-            echo "- Portfolio: http://${{ vars.PORTFOLIO_BUCKET }}.s3-website-${AWS_REGION}.amazonaws.com"
-            echo "- Lambda: skillmatch-api updated and published"
+            echo "## ✅ Deployed commit \`${GITHUB_SHA::7}\` to AWS ($AWS_REGION)"
+            echo "- Portfolio (S3 + CloudFront): ${{ vars.PORTFOLIO_URL }}"
+            echo "- SkillMatch Lambda: new version published"
+            echo '```json'; cat report.json; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
